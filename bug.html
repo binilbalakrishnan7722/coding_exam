@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<img id="img" src="https://imgs.search.brave.com/iA-0_Z1cNBbSfT1lyJ9d8vKyDSfx4CIVs8FdS6jTKqM/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly9zdGF0/aWMudmVjdGVlenku/Y29tL3N5c3RlbS9y/ZXNvdXJjZXMvdGh1/bWJuYWlscy8wNTAv/ODI5LzAxMi9zbWFs/bC9iYXRtYW4tbG9n/by1hcnQtZnJlZS12/ZWN0b3IuanBn"/>
+<button id="switch">Switch</button>
+
+<script>
+let toggle = false;
+const img = document.querySelector("#img");
+
+document.querySelector("#switch").addEventListener("click", () => {
+    toggle = !toggle;
+    img.src = toggle ? "https://imgs.search.brave.com/fmBYns8GRQ9Cp4JA90Y9j0xJpwcwphqZvaLE191kWJU/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly93d3cu/ZGVzaWdueW91cndh/eS5uZXQvYmxvZy93/cC1jb250ZW50L3Vw/bG9hZHMvMjAxOS8w/NS9iYXRtYW4tcmV0/dXJuc19CYXRtYW4t/TG9nby1Nb3ZpZS1h/bmQtVFYtMTk5Mi03/MDB4NDkzLmpwZw" : "https://imgs.search.brave.com/cN1sjAmVs_yyTo3UWA3sAUad6GzDMyp9EmiMOf2M4qs/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly9sb2dv/cy13b3JsZC5uZXQv/d3AtY29udGVudC91/cGxvYWRzLzIwMjAv/MTIvQmF0bWFuLUxv/Z28tMjAxNi0yMDE4/LTcwMHgzOTQucG5n";
+});
+</script>
+
+</body>
+</html>
