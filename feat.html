@@ -146,7 +146,7 @@ input[type="number"] {
 const STORAGE_KEY = "payments";
 
 const defaultData = [
-  { date: "2025-05-22", description: "testing", amount: 399 }
+  { date: "", description: "", amount: 0.00 }
 ];
 
 let payments = JSON.parse(localStorage.getItem(STORAGE_KEY)) || defaultData;
