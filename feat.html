@@ -1,66 +1,56 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<title>Payments Management</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8">
+<title>Payments</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
 :root {
-  --purple: #4b2cff;
+  --purple: #2b00c8;
   --light-purple: #eef0ff;
-  --border: #D2D5DA;
-  --text: #232323;
+  --border: #d2d5da;
 }
 
 * {
   box-sizing: border-box;
-  font-family: "Segoe UI", system-ui, sans-serif;
+  font-family: "Segoe UI", sans-serif;
 }
 
 body {
   margin: 0;
-  background: #f6f7fb;
   padding: 30px;
+  background: #f6f7fb;
 }
 
-/* Header */
-.header {
+h2 {
   font-size: 24px;
   font-weight: 600;
-  color: var(--text);
+  color: #232323;
   margin-bottom: 20px;
 }
 
-/* Container */
-.payments-box {
+.box {
   background: var(--light-purple);
-  border-radius: 10px;
   padding: 20px;
+  border-radius: 10px;
+  max-width: 1100px;
 }
 
-/* Table */
-.table-header,
-.payment-row {
+.header,
+.row {
   display: grid;
   grid-template-columns: 160px 1fr 150px 100px;
   gap: 10px;
   align-items: center;
 }
 
-.table-header {
+.header {
   font-weight: 600;
-  padding-bottom: 10px;
-}
-
-.payment-row {
   margin-bottom: 10px;
 }
 
-/* Inputs */
-input[type="date"],
-input[type="text"],
-input[type="number"] {
+input {
   height: 40px;
   border-radius: 4px;
   border: 2px solid var(--border);
@@ -73,13 +63,12 @@ input[type="number"] {
   text-align: right;
 }
 
-/* Action buttons */
 .actions {
   display: flex;
   gap: 8px;
 }
 
-.icon-btn {
+.icon {
   width: 34px;
   height: 34px;
   border-radius: 50%;
@@ -90,168 +79,163 @@ input[type="number"] {
   justify-content: center;
 }
 
-.delete-btn {
-  background: #ff4d4f;
-}
+.delete { background: #ff4d4f; }
+.add { background: #4096ff; }
 
-.add-btn {
-  background: #4096ff;
-}
-
-.icon-btn svg {
+.icon svg {
   width: 16px;
-  height: 16px;
-  fill: white;
+  fill: #fff;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-  .table-header {
-    display: none;
-  }
+/* Bottom buttons */
+.bottom {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 25px;
+}
 
-  .payment-row {
-    grid-template-columns: 1fr;
-    background: white;
-    padding: 10px;
-    border-radius: 8px;
-  }
+.btn {
+  min-width: 110px;
+  height: 40px;
+  border-radius: 8px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+}
 
-  .actions {
-    justify-content: flex-end;
-  }
+.save {
+  background: var(--purple);
+  color: #fff;
+}
+
+.cancel {
+  background: #fff;
+  border: 1px solid var(--border);
+}
+
+.invoice {
+  background: #ff7a00;
+  color: #fff;
 }
 </style>
 </head>
 
 <body>
 
-<div class="header">Payments</div>
+<h2>Payments</h2>
 
-<div class="payments-box">
-  <div class="table-header">
+<div class="box">
+  <div class="header">
     <div>Date</div>
     <div>Description</div>
     <div>Amount</div>
     <div>Action</div>
   </div>
 
-  <div id="paymentsBody"></div>
+  <div id="rows"></div>
+
+  <div class="bottom">
+    <button class="btn save" id="saveBtn">Save</button>
+    <button class="btn cancel" id="cancelBtn">Cancel</button>
+    <button class="btn invoice">Invoice</button>
+  </div>
 </div>
 
 <script>
 const STORAGE_KEY = "payments";
 
 const defaultData = [
-  { date: "2025-11-19", description: "Initial deposit", amount: 1500.00 },
-  { date: "2025-11-19", description: "deposit", amount: 1200.00 }
+  { date: "2025-05-22", description: "testing", amount: 399 }
 ];
 
 let payments = JSON.parse(localStorage.getItem(STORAGE_KEY)) || defaultData;
+const rows = document.getElementById("rows");
 
-const body = document.getElementById("paymentsBody");
-
-/* Utilities */
-function formatAmount(value) {
-  return Number(value).toLocaleString(undefined, {
+function format(n) {
+  return Number(n).toLocaleString(undefined, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   });
 }
 
-function saveData() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(payments));
-}
-
-/* Render */
 function render() {
-  body.innerHTML = "";
+  rows.innerHTML = "";
 
-  payments.forEach((row, index) => {
+  payments.forEach((p, i) => {
     const div = document.createElement("div");
-    div.className = "payment-row";
-    div.dataset.rowIndex = index;
+    div.className = "row";
+    div.dataset.i = i;
 
     div.innerHTML = `
-      <input type="date" value="${row.date || ""}">
-      <input type="text" value="${row.description || ""}">
-      <input type="number" step="0.01" value="${row.amount !== null ? formatAmount(row.amount) : ""}">
+      <input type="date" value="${p.date}">
+      <input type="text" value="${p.description}">
+      <input type="number" value="${format(p.amount)}">
       <div class="actions">
-        <button class="icon-btn delete-btn" title="Delete">
-          <svg viewBox="0 0 24 24">
-            <path d="M6 7h12l-1 14H7L6 7zm3-3h6l1 2H8l1-2z"/>
-          </svg>
+        <button class="icon delete">
+          <svg viewBox="0 0 24 24"><path d="M6 7h12l-1 14H7L6 7zm3-3h6l1 2H8l1-2z"/></svg>
         </button>
-        ${index === payments.length - 1 ? `
-        <button class="icon-btn add-btn" title="Add">
-          <svg viewBox="0 0 24 24">
-            <path d="M11 5h2v14h-2zM5 11h14v2H5z"/>
-          </svg>
+        ${i === payments.length - 1 ? `
+        <button class="icon add">
+          <svg viewBox="0 0 24 24"><path d="M11 5h2v14h-2zM5 11h14v2H5z"/></svg>
         </button>` : ""}
       </div>
     `;
-    body.appendChild(div);
+    rows.appendChild(div);
   });
 }
 
-/* Events */
-body.addEventListener("input", e => {
-  const row = e.target.closest(".payment-row");
+rows.addEventListener("input", e => {
+  const row = e.target.closest(".row");
   if (!row) return;
-  const i = row.dataset.rowIndex;
+  const i = row.dataset.i;
 
   if (e.target.type === "number") {
     e.target.value = e.target.value.replace(/,/g, "");
-    if (!/^\d*\.?\d{0,2}$/.test(e.target.value)) {
-      e.target.value = e.target.value.slice(0, -1);
-    }
     payments[i].amount = Number(e.target.value) || 0;
   } else if (e.target.type === "date") {
     payments[i].date = e.target.value;
   } else {
     payments[i].description = e.target.value;
   }
-  saveData();
 });
 
-body.addEventListener("focusin", e => {
+rows.addEventListener("focusout", e => {
   if (e.target.type === "number") {
-    e.target.value = e.target.value.replace(/,/g, "");
+    e.target.value = format(e.target.value || 0);
   }
 });
 
-body.addEventListener("focusout", e => {
-  if (e.target.type === "number") {
-    e.target.value = formatAmount(e.target.value || 0);
-  }
-});
-
-body.addEventListener("wheel", e => {
-  if (e.target.type === "number") e.target.blur();
-});
-
-body.addEventListener("click", e => {
-  const row = e.target.closest(".payment-row");
+rows.addEventListener("click", e => {
+  const row = e.target.closest(".row");
   if (!row) return;
-  const i = row.dataset.rowIndex;
+  const i = row.dataset.i;
 
-  if (e.target.closest(".add-btn")) {
+  if (e.target.closest(".add")) {
     payments.push({ date: "", description: "", amount: 0 });
     render();
   }
 
-  if (e.target.closest(".delete-btn")) {
+  if (e.target.closest(".delete")) {
     if (payments.length === 1) {
       payments[0] = { date: "", description: "", amount: 0 };
     } else {
       payments.splice(i, 1);
     }
-    saveData();
     render();
   }
 });
 
-/* Init */
+document.getElementById("saveBtn").onclick = () => {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(payments));
+  alert("Saved successfully ✅");
+};
+
+document.getElementById("cancelBtn").onclick = () => {
+  payments = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+  render();
+};
+
 render();
 </script>
 
