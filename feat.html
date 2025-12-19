@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Payments Management</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<style>
+:root {
+  --purple: #4b2cff;
+  --light-purple: #eef0ff;
+  --border: #D2D5DA;
+  --text: #232323;
+}
+
+* {
+  box-sizing: border-box;
+  font-family: "Segoe UI", system-ui, sans-serif;
+}
+
+body {
+  margin: 0;
+  background: #f6f7fb;
+  padding: 30px;
+}
+
+/* Header */
+.header {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 20px;
+}
+
+/* Container */
+.payments-box {
+  background: var(--light-purple);
+  border-radius: 10px;
+  padding: 20px;
+}
+
+/* Table */
+.table-header,
+.payment-row {
+  display: grid;
+  grid-template-columns: 160px 1fr 150px 100px;
+  gap: 10px;
+  align-items: center;
+}
+
+.table-header {
+  font-weight: 600;
+  padding-bottom: 10px;
+}
+
+.payment-row {
+  margin-bottom: 10px;
+}
+
+/* Inputs */
+input[type="date"],
+input[type="text"],
+input[type="number"] {
+  height: 40px;
+  border-radius: 4px;
+  border: 2px solid var(--border);
+  padding: 0 10px;
+  font-size: 14px;
+  width: 100%;
+}
+
+input[type="number"] {
+  text-align: right;
+}
+
+/* Action buttons */
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.icon-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.delete-btn {
+  background: #ff4d4f;
+}
+
+.add-btn {
+  background: #4096ff;
+}
+
+.icon-btn svg {
+  width: 16px;
+  height: 16px;
+  fill: white;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .table-header {
+    display: none;
+  }
+
+  .payment-row {
+    grid-template-columns: 1fr;
+    background: white;
+    padding: 10px;
+    border-radius: 8px;
+  }
+
+  .actions {
+    justify-content: flex-end;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">Payments</div>
+
+<div class="payments-box">
+  <div class="table-header">
+    <div>Date</div>
+    <div>Description</div>
+    <div>Amount</div>
+    <div>Action</div>
+  </div>
+
+  <div id="paymentsBody"></div>
+</div>
+
+<script>
+const STORAGE_KEY = "payments";
+
+const defaultData = [
+  { date: "2025-11-19", description: "Initial deposit", amount: 1500.00 },
+  { date: "2025-11-19", description: "deposit", amount: 1200.00 }
+];
+
+let payments = JSON.parse(localStorage.getItem(STORAGE_KEY)) || defaultData;
+
+const body = document.getElementById("paymentsBody");
+
+/* Utilities */
+function formatAmount(value) {
+  return Number(value).toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+}
+
+function saveData() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(payments));
+}
+
+/* Render */
+function render() {
+  body.innerHTML = "";
+
+  payments.forEach((row, index) => {
+    const div = document.createElement("div");
+    div.className = "payment-row";
+    div.dataset.rowIndex = index;
+
+    div.innerHTML = `
+      <input type="date" value="${row.date || ""}">
+      <input type="text" value="${row.description || ""}">
+      <input type="number" step="0.01" value="${row.amount !== null ? formatAmount(row.amount) : ""}">
+      <div class="actions">
+        <button class="icon-btn delete-btn" title="Delete">
+          <svg viewBox="0 0 24 24">
+            <path d="M6 7h12l-1 14H7L6 7zm3-3h6l1 2H8l1-2z"/>
+          </svg>
+        </button>
+        ${index === payments.length - 1 ? `
+        <button class="icon-btn add-btn" title="Add">
+          <svg viewBox="0 0 24 24">
+            <path d="M11 5h2v14h-2zM5 11h14v2H5z"/>
+          </svg>
+        </button>` : ""}
+      </div>
+    `;
+    body.appendChild(div);
+  });
+}
+
+/* Events */
+body.addEventListener("input", e => {
+  const row = e.target.closest(".payment-row");
+  if (!row) return;
+  const i = row.dataset.rowIndex;
+
+  if (e.target.type === "number") {
+    e.target.value = e.target.value.replace(/,/g, "");
+    if (!/^\d*\.?\d{0,2}$/.test(e.target.value)) {
+      e.target.value = e.target.value.slice(0, -1);
+    }
+    payments[i].amount = Number(e.target.value) || 0;
+  } else if (e.target.type === "date") {
+    payments[i].date = e.target.value;
+  } else {
+    payments[i].description = e.target.value;
+  }
+  saveData();
+});
+
+body.addEventListener("focusin", e => {
+  if (e.target.type === "number") {
+    e.target.value = e.target.value.replace(/,/g, "");
+  }
+});
+
+body.addEventListener("focusout", e => {
+  if (e.target.type === "number") {
+    e.target.value = formatAmount(e.target.value || 0);
+  }
+});
+
+body.addEventListener("wheel", e => {
+  if (e.target.type === "number") e.target.blur();
+});
+
+body.addEventListener("click", e => {
+  const row = e.target.closest(".payment-row");
+  if (!row) return;
+  const i = row.dataset.rowIndex;
+
+  if (e.target.closest(".add-btn")) {
+    payments.push({ date: "", description: "", amount: 0 });
+    render();
+  }
+
+  if (e.target.closest(".delete-btn")) {
+    if (payments.length === 1) {
+      payments[0] = { date: "", description: "", amount: 0 };
+    } else {
+      payments.splice(i, 1);
+    }
+    saveData();
+    render();
+  }
+});
+
+/* Init */
+render();
+</script>
+
+</body>
+</html>
