@@ -169,7 +169,7 @@ function render() {
 
     div.innerHTML = `
       <input type="date" value="${p.date}">
-      <input type="text" value="${p.description}">
+      <input type="text" placeholder="Description" value="${p.description}">
       <input type="number" value="${format(p.amount)}">
       <div class="actions">
         <button class="icon delete">
@@ -227,8 +227,35 @@ rows.addEventListener("click", e => {
 });
 
 document.getElementById("saveBtn").onclick = () => {
+  const validPayments = payments.filter(p =>
+    p.date || p.description || p.amount > 0
+  );
+
+  if (validPayments.length === 0) {
+    alert("Please enter at least one payment.");
+    return;
+  }
+
+  for (let i = 0; i < validPayments.length; i++) {
+    const p = validPayments[i];
+
+    if (!p.date) {
+      alert(`Row ${i + 1}: Date is required`);
+      return;
+    }
+    if (!p.description.trim()) {
+      alert(`Row ${i + 1}: Description is required`);
+      return;
+    }
+    if (p.amount <= 0) {
+      alert(`Row ${i + 1}: Amount must be greater than 0`);
+      return;
+    }
+  }
+
+  payments = validPayments;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(payments));
-  alert("Saved successfully ✅");
+  alert("Payments saved successfully ✅");
 };
 
 document.getElementById("cancelBtn").onclick = () => {
