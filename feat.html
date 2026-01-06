@@ -59,7 +59,7 @@ input {
   width: 100%;
 }
 
-input[type="number"] {
+.amount {
   text-align: right;
 }
 
@@ -87,7 +87,7 @@ input[type="number"] {
   fill: #fff;
 }
 
-/* Bottom buttons */
+
 .bottom {
   display: flex;
   justify-content: center;
@@ -145,32 +145,33 @@ input[type="number"] {
 <script>
 const STORAGE_KEY = "payments";
 
-const defaultData = [
-  { date: "", description: "", amount: 0.00 }
+let payments = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [
+  { date: "2025-05-22", description: "testing", amount: 399 }
 ];
 
-let payments = JSON.parse(localStorage.getItem(STORAGE_KEY)) || defaultData;
 const rows = document.getElementById("rows");
 
-function format(n) {
+
+function formatAmount(n) {
   return Number(n).toLocaleString(undefined, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   });
 }
 
+
 function render() {
   rows.innerHTML = "";
 
   payments.forEach((p, i) => {
-    const div = document.createElement("div");
-    div.className = "row";
-    div.dataset.i = i;
+    const row = document.createElement("div");
+    row.className = "row";
+    row.dataset.index = i;
 
-    div.innerHTML = `
+    row.innerHTML = `
       <input type="date" value="${p.date}">
       <input type="text" placeholder="Description" value="${p.description}">
-      <input type="number" value="${format(p.amount)}">
+      <input type="text" class="amount" value="${formatAmount(p.amount)}">
       <div class="actions">
         <button class="icon delete">
           <svg viewBox="0 0 24 24"><path d="M6 7h12l-1 14H7L6 7zm3-3h6l1 2H8l1-2z"/></svg>
@@ -181,35 +182,46 @@ function render() {
         </button>` : ""}
       </div>
     `;
-    rows.appendChild(div);
+    rows.appendChild(row);
   });
 }
+
 
 rows.addEventListener("input", e => {
   const row = e.target.closest(".row");
   if (!row) return;
-  const i = row.dataset.i;
 
-  if (e.target.type === "number") {
-    e.target.value = e.target.value.replace(/,/g, "");
-    payments[i].amount = Number(e.target.value) || 0;
-  } else if (e.target.type === "date") {
+  const i = row.dataset.index;
+
+  if (e.target.classList.contains("amount")) {
+    const raw = e.target.value.replace(/,/g, "");
+    if (/^\d*\.?\d{0,2}$/.test(raw)) {
+      payments[i].amount = raw === "" ? 0 : Number(raw);
+    } else {
+      e.target.value = formatAmount(payments[i].amount);
+    }
+  }
+  else if (e.target.type === "date") {
     payments[i].date = e.target.value;
-  } else {
+  }
+  else {
     payments[i].description = e.target.value;
   }
 });
 
+
 rows.addEventListener("focusout", e => {
-  if (e.target.type === "number") {
-    e.target.value = format(e.target.value || 0);
+  if (e.target.classList.contains("amount")) {
+    e.target.value = formatAmount(payments[e.target.closest(".row").dataset.index].amount);
   }
 });
+
 
 rows.addEventListener("click", e => {
   const row = e.target.closest(".row");
   if (!row) return;
-  const i = row.dataset.i;
+
+  const i = row.dataset.index;
 
   if (e.target.closest(".add")) {
     payments.push({ date: "", description: "", amount: 0 });
@@ -226,37 +238,29 @@ rows.addEventListener("click", e => {
   }
 });
 
+
 document.getElementById("saveBtn").onclick = () => {
-  const validPayments = payments.filter(p =>
-    p.date || p.description || p.amount > 0
+  const cleaned = payments.filter(
+    p => p.date || p.description || p.amount > 0
   );
 
-  if (validPayments.length === 0) {
+  if (!cleaned.length) {
     alert("Please enter at least one payment.");
     return;
   }
 
-  for (let i = 0; i < validPayments.length; i++) {
-    const p = validPayments[i];
-
-    if (!p.date) {
-      alert(`Row ${i + 1}: Date is required`);
-      return;
-    }
-    if (!p.description.trim()) {
-      alert(`Row ${i + 1}: Description is required`);
-      return;
-    }
-    if (p.amount <= 0) {
-      alert(`Row ${i + 1}: Amount must be greater than 0`);
-      return;
-    }
+  for (let i = 0; i < cleaned.length; i++) {
+    const p = cleaned[i];
+    if (!p.date) return alert(`Row ${i + 1}: Date required`);
+    if (!p.description.trim()) return alert(`Row ${i + 1}: Description required`);
+    if (p.amount <= 0) return alert(`Row ${i + 1}: Amount must be > 0`);
   }
 
-  payments = validPayments;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(payments));
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(cleaned));
+  payments = cleaned;
   alert("Payments saved successfully ✅");
 };
+
 
 document.getElementById("cancelBtn").onclick = () => {
   payments = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
